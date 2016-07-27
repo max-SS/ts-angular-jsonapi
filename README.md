@@ -7,12 +7,23 @@ Jsonapi client library developed for AngularJS based on typescript.
 - [x] TS Definitions for strong typing and autocomplete ([See example image](https://github.com/reyesoft/ts-angular-jsonapi/wiki/Autocomplete))
 - [x] Get resource and collection of resources
 - [x] Include support (also, when you save)
-- [ ] Iqual requests, return a same ResourceObject
 - [ ] Declaration file published on [DefinitelyTyped repository](https://github.com/borisyankov/DefinitelyTyped).
-- [ ] Caché
+- [ ] Two+ equal calls, only one HTTP request.
+- [x] Before a HTTP request, objects are set with cached data.
+- [x] Equal requests, return a same ResourceObject
+- [x] Short time cache (on memory)
+- [ ] Long time cache (localstorage)
+- [ ] Sorting
 - [ ] Pagination
+- [ ] Filtering
+- [x] Get a relationship from a URL (url like attributes->relationships->resource->links->self)
+- [x] Properties on collections like `$length`, `$isloading` or `$source` (_`empty`_ |`cache`|`server`)
 
-## Installation
+## Usage
+
+More information on [examples section](#examples).
+
+### Installation
 
 First of all, you need read, read and read [Jsonapi specification](http://jsonapi.org/).
 
@@ -103,6 +114,16 @@ class AuthorsController {
 </p>
 ```
 
+#### More options? Collection filtering
+
+Filter resources with `attribute: value` values. Filters are used as 'exact match' (only resources with attribute value same as value are returned). `value` can also be an array, then only objects with same `attribute` value as one of `values` array elements are returned.
+
+```javascript
+let authors = AuthorsService.all(
+    { filter: { name: 'xx' } }
+);
+```
+
 ### Get a single resource
 
 From this point, you only see important code for this library. For a full example, clone and see demo directory.
@@ -111,7 +132,7 @@ From this point, you only see important code for this library. For a full exampl
 let author = AuthorsService.get('some_author_id');
 ```
 
-#### Need you more control and options?
+#### More options? Include resources when you fetch data (or save!)
 
 ```javascript
 let author = AuthorsService.get(
@@ -143,12 +164,23 @@ author.save();
 let author = this.AuthorsService.new();
 author.attributes.name = 'Pablo Reyes';
 author.attributes.date_of_birth = '2030-12-10';
-// book is an another resource like author
-author.addRelationship(book);
-// editorial is a polymorphic resource named company on this case
-author.addRelationship(editorial, 'company');
+
+// some_book is an another resource like author
+let some_book = this.BooksService.get(1);
+author.addRelationship(some_book);
+
+// some_publisher is a polymorphic resource named company on this case
+let some_publisher = this.PublishersService.get(1);
+author.addRelationship(some_publisher, 'company');
+
+// wow, now we need detach a relationship
+author.removeRelationship('books', 'book_id');
+
 // this library can send include information to server, for atomicity
 author.save( { include: ['book'] });
+
+// mmmm, if I need get related resources? For example, books related with author 1
+let books = this.AuthorsService.getRelationships('1/books');
 ```
 
 ### Update a resource

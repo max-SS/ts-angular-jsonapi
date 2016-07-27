@@ -6,6 +6,8 @@ module Jsonapi {
         public loadingsCounter: number = 0;
         public loadingsStart = () => {};
         public loadingsDone = () => {};
+        public loadingsError = () => {};
+        public loadingsOffline = () => {};
 
         public static Me: Jsonapi.ICore = null;
         public static Services: any = null;

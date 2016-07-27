@@ -4,6 +4,7 @@ module Jsonapi {
         /** @ngInject */
         public constructor(
             protected $http,
+            protected $timeout,
             protected rsJsonapiConfig,
             protected $q
         ) {
@@ -11,7 +12,7 @@ module Jsonapi {
         }
 
         public delete(path: string) {
-
+            return this.exec(path, 'DELETE');
         }
 
         public get(path: string) {
@@ -30,15 +31,28 @@ module Jsonapi {
             let promise = this.$http(req);
 
             let deferred = this.$q.defer();
-            let xthis = this;
+            let self = this;
             Jsonapi.Core.Me.refreshLoadings(1);
             promise.then(
                 success => {
-                    Jsonapi.Core.Me.refreshLoadings(-1);
-                    deferred.resolve(success);
+                    // timeout just for develop environment
+                    self.$timeout( () => {
+                        Jsonapi.Core.Me.refreshLoadings(-1);
+                        deferred.resolve(success);
+                    }, self.rsJsonapiConfig.delay);
                 },
                 error => {
                     Jsonapi.Core.Me.refreshLoadings(-1);
+                    if (error.status <= 0) {
+                        // offline?
+                        if (!Jsonapi.Core.Me.loadingsOffline(error)) {
+                            console.warn('Jsonapi.Http.exec (use JsonapiCore.loadingsOffline for catch it) error =>', error);
+                        }
+                    } else {
+                        if (!Jsonapi.Core.Me.loadingsError(error)) {
+                            console.warn('Jsonapi.Http.exec (use JsonapiCore.loadingsError for catch it) error =>', error);
+                        }
+                    }
                     deferred.reject(error);
                 }
             );
